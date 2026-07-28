@@ -26,16 +26,6 @@ export default function Join() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
   const [selected, setSelected] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [year, setYear] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !email || !selected) return;
-    setTimeout(() => setSubmitted(true), 300);
-  };
 
   return (
     <section id="join" style={{ ...S, overflow: "hidden" }}>
@@ -145,117 +135,7 @@ export default function Join() {
           })}
         </div>
 
-        {/* Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 32 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.55 }}
-          style={{ maxWidth: 520, margin: "0 auto" }}
-        >
-          <AnimatePresence mode="wait">
-            {submitted ? (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
-                style={{
-                  textAlign: "center", padding: "60px 40px",
-                  background: "rgba(255,255,255,0.025)",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: 22,
-                }}
-              >
-                <motion.div
-                  initial={{ scale: 0 }} animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
-                  style={{
-                    width: 64, height: 64, borderRadius: "50%",
-                    background: "rgba(34,197,94,0.12)",
-                    border: "2px solid #22C55E",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    margin: "0 auto 24px",
-                  }}
-                >
-                  <Check size={28} color="#22C55E" />
-                </motion.div>
-                <h3 style={{ fontSize: 24, fontWeight: 700, color: "#fff", marginBottom: 12 }}>You&apos;re in. 🎉</h3>
-                <p style={{ color: "rgba(255,255,255,0.5)", lineHeight: 1.65 }}>
-                  Welcome to AWS SBG @ RV University. Check your email for the WhatsApp Community invite and next steps.
-                </p>
-              </motion.div>
-            ) : (
-              <motion.form
-                key="form"
-                onSubmit={handleSubmit}
-                style={{
-                  background: "rgba(255,255,255,0.025)",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: 22, padding: "40px",
-                  display: "flex", flexDirection: "column", gap: 20,
-                }}
-              >
-                <div>
-                  <h3 style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 6 }}>Join AWS SBG</h3>
-                  <p className="mono" style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
-                    {selected ? `Track: ${TRACKS.find(t => t.id === selected)?.title}` : "Select a track above to continue"}
-                  </p>
-                </div>
-                {[
-                  { value: name, setter: setName, placeholder: "Your full name", id: "join-name", type: "text" },
-                  { value: email, setter: setEmail, placeholder: "College email address", id: "join-email", type: "email" },
-                ].map(({ value, setter, placeholder, id, type }) => (
-                  <input
-                    key={id} type={type} value={value}
-                    onChange={e => setter(e.target.value)}
-                    placeholder={placeholder} required id={id}
-                    style={{
-                      width: "100%", padding: "14px 18px",
-                      borderRadius: 12, fontSize: 14, color: "#fff",
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      fontFamily: "inherit", outline: "none",
-                      transition: "border-color 0.2s",
-                    }}
-                    onFocus={e => (e.target.style.borderColor = "rgba(255,153,0,0.4)")}
-                    onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.08)")}
-                  />
-                ))}
-                <select
-                  value={year} onChange={e => setYear(e.target.value)}
-                  id="join-year"
-                  style={{
-                    width: "100%", padding: "14px 18px",
-                    borderRadius: 12, fontSize: 14,
-                    color: year ? "#fff" : "rgba(255,255,255,0.35)",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    fontFamily: "inherit", outline: "none", appearance: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  onFocus={e => (e.target.style.borderColor = "rgba(255,153,0,0.4)")}
-                  onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.08)")}
-                >
-                  <option value="" disabled style={{ background: "#0a0a14" }}>Year of study</option>
-                  {["1st Year", "2nd Year", "3rd Year", "4th Year"].map(y => (
-                    <option key={y} value={y} style={{ background: "#0a0a14" }}>{y}</option>
-                  ))}
-                </select>
-                <button
-                  type="submit"
-                  className="btn-orange"
-                  id="join-submit"
-                  style={{
-                    justifyContent: "center",
-                    opacity: (!name || !email || !selected) ? 0.45 : 1,
-                    transition: "opacity 0.2s",
-                  }}
-                >
-                  Join the builders <ArrowRight size={17} />
-                </button>
-                <p className="mono" style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.25)" }}>
-                  No spam. Just builds, events, and AWS credits.
-                </p>
-              </motion.form>
-            )}
-          </AnimatePresence>
-        </motion.div>
+
       </div>
     </section>
   );

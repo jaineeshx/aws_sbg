@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
@@ -32,8 +31,8 @@ export default function Navbar() {
         style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
           background: scrolled ? "rgba(3,3,8,0.88)" : "transparent",
-          backdropFilter: scrolled ? "blur(24px)" : "none",
-          WebkitBackdropFilter: scrolled ? "blur(24px)" : "none",
+          backdropFilter: scrolled ? "blur(12px)" : "none",
+          WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
           borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "none",
           transition: "background 0.3s, backdrop-filter 0.3s, border-color 0.3s",
         }}
@@ -41,8 +40,8 @@ export default function Navbar() {
         <div style={{ ...W, display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
           {/* Logo */}
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-            <div style={{ width: 40, height: 40, flexShrink: 0, position: "relative" }}>
-              <Image src="/logo-sbg.svg" alt="AWS Student Builder Group Logo" fill style={{ objectFit: "contain" }} />
+            <div style={{ width: 40, height: 40, flexShrink: 0, position: "relative", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <img src="/logo-sbg.jpg" alt="AWS Student Builder Group Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>AWS SBG</div>

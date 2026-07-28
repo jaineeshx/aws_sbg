@@ -4,6 +4,46 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
 
+/* ── typewriter ─────────────────────────────────────────────────────────────── */
+function Typewriter({ words }: { words: string[] }) {
+  const [text, setText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [loopNum, setLoopNum] = useState(0);
+  const [typingSpeed, setTypingSpeed] = useState(150);
+
+  useEffect(() => {
+    const handleType = () => {
+      const i = loopNum % words.length;
+      const fullText = words[i];
+
+      setText(
+        isDeleting
+          ? fullText.substring(0, text.length - 1)
+          : fullText.substring(0, text.length + 1)
+      );
+
+      setTypingSpeed(isDeleting ? 30 : 150);
+
+      if (!isDeleting && text === fullText) {
+        setTimeout(() => setIsDeleting(true), 1500);
+      } else if (isDeleting && text === "") {
+        setIsDeleting(false);
+        setLoopNum(loopNum + 1);
+      }
+    };
+
+    const timer = setTimeout(handleType, typingSpeed);
+    return () => clearTimeout(timer);
+  }, [text, isDeleting, loopNum, typingSpeed, words]);
+
+  return (
+    <span style={{ display: "inline-block", minWidth: 20 }}>
+      {text}
+      <span className="blink" style={{ color: "#FF9900", marginLeft: 4 }}>|</span>
+    </span>
+  );
+}
+
 /* ── shared layout constants ───────────────────────────────────────────────── */
 export const W = { maxWidth: 1160, margin: "0 auto", padding: "0 clamp(24px, 5vw, 60px)" } as const;
 
@@ -45,7 +85,7 @@ function Terminal() {
         border: "1px solid rgba(255,255,255,0.08)",
         borderRadius: 22,
         boxShadow: "0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,153,0,0.05), inset 0 1px 0 rgba(255,255,255,0.04)",
-        backdropFilter: "blur(20px)",
+        backdropFilter: "blur(8px)",
         overflow: "hidden",
       }}
     >
@@ -130,7 +170,7 @@ export default function Hero() {
             position: "absolute", width: 900, height: 900,
             top: "-20%", left: "-15%",
             background: "radial-gradient(circle, rgba(255,153,0,0.09) 0%, transparent 65%)",
-            filter: "blur(80px)",
+            filter: "blur(40px)",
             transformOrigin: "center",
           }}
         />
@@ -140,7 +180,7 @@ export default function Hero() {
             position: "absolute", width: 800, height: 800,
             top: "20%", right: "-15%",
             background: "radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 65%)",
-            filter: "blur(80px)",
+            filter: "blur(40px)",
             transformOrigin: "center",
           }}
         />
@@ -150,7 +190,7 @@ export default function Hero() {
             position: "absolute", width: 600, height: 600,
             bottom: "-10%", left: "35%",
             background: "radial-gradient(circle, rgba(56,189,248,0.06) 0%, transparent 65%)",
-            filter: "blur(60px)",
+            filter: "blur(30px)",
             transformOrigin: "center",
           }}
         />
@@ -212,40 +252,19 @@ export default function Hero() {
                 </motion.div>
 
                 {/* Headline */}
-                <div style={{ overflow: "hidden" }}>
-                  <motion.h1
-                    variants={wordVariants}
-                    initial="hidden"
-                    animate="show"
+                <div style={{ minHeight: "2.4em", display: "flex", alignItems: "center" }}>
+                  <h1
                     style={{
                       fontWeight: 800,
-                      lineHeight: 0.95,
+                      lineHeight: 1.1,
                       letterSpacing: "-0.03em",
-                      fontSize: "clamp(64px, 9vw, 110px)",
+                      fontSize: "clamp(48px, 7vw, 90px)",
+                      color: "#fff",
+                      margin: 0,
                     }}
                   >
-                    {["We're", "building"].map((w) => (
-                      <div key={w} style={{ overflow: "hidden", display: "block" }}>
-                        <motion.span variants={word} style={{ display: "block", color: "#fff" }}>{w}</motion.span>
-                      </div>
-                    ))}
-                    {["what's", "missing."].map((w, i) => (
-                      <div key={w} style={{ overflow: "hidden", display: "block" }}>
-                        <motion.span
-                          variants={word}
-                          style={{
-                            display: "block",
-                            background: "linear-gradient(125deg, #FF9900, #FF6200 50%, #FFBE00)",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            backgroundClip: "text",
-                          }}
-                        >
-                          {w}
-                        </motion.span>
-                      </div>
-                    ))}
-                  </motion.h1>
+                    <Typewriter words={["Build With Us.", "Build With Kiro.", "Build With AWS."]} />
+                  </h1>
                 </div>
 
                 {/* Sub */}
