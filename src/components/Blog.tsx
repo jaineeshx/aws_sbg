@@ -18,29 +18,16 @@ interface Post {
   id: string; title: string; excerpt: string;
   author: string; date: string; readTime: string;
   tags: string[]; type: PType; accent: string; featured?: boolean;
+  url?: string;
 }
 
 const POSTS: Post[] = [
   { id: "bl1", featured: true, type: "Build Log", accent: "#38BDF8",
-    title: "How We Built an AI Study Assistant with AWS Bedrock in a Weekend",
-    excerpt: "A behind-the-scenes look at building a RAG-powered chatbot for RV University students using Claude 3 on AWS Bedrock. What worked, what didn't, and what we'd do differently.",
-    author: "Priya Sharma", date: "July 2026", readTime: "8 min",
-    tags: ["Bedrock", "RAG", "Claude", "Lambda"] },
-  { id: "bl2", type: "Career", accent: "#22C55E",
-    title: "AWS Cloud Practitioner — What Actually Matters as a Student",
-    excerpt: "Skip the 400-page study guide. Here's what showed up in the CCP exam and how we studied in 3 weeks while managing coursework.",
-    author: "Dev Krishnan", date: "June 2026", readTime: "6 min",
-    tags: ["Certification", "CCP", "Study Guide"] },
-  { id: "bl3", type: "Recap", accent: "#FF9900",
-    title: "Build Sprint Hackathon Recap: 12 Hours, 8 Teams, 1 Winner",
-    excerpt: "What happened when 80 students were locked in a room with AWS credits and a problem statement. Full recap with winning team breakdown.",
-    author: "Rohan Mehta", date: "March 2026", readTime: "5 min",
-    tags: ["Hackathon", "Community", "Projects"] },
-  { id: "bl4", type: "Tutorial", accent: "#818CF8",
-    title: "Serverless on AWS: A Beginner's Actually-Working Tutorial",
-    excerpt: "Stop reading outdated Lambda tutorials. This guide walks through building a real serverless REST API with proper error handling and IAM roles.",
-    author: "Santhosh K", date: "May 2026", readTime: "12 min",
-    tags: ["Lambda", "API Gateway", "Serverless"] },
+    title: "Why your JWT Cookie Dies Between Vercel and EC2 (And How I Fixed It)",
+    excerpt: "A raw EC2 instance gives you no managed domain and no HTTPS by default - here's the auth bug that cost me, three rounds of fixes, and the one gap that's still open.",
+    author: "AWS SBG Builder", date: "Now", readTime: "5 min",
+    tags: ["EC2", "Vercel", "Auth", "JWT"],
+    url: "https://builder.aws.com/content/3GP4O5y4CvVN4AnnFMceMy9ZdRU/why-your-jwt-cookie-dies-between-vercel-and-ec2-and-how-i-fixed-it" },
 ];
 
 function PostCard({ post, i }: { post: Post; i: number }) {
@@ -138,7 +125,9 @@ function PostCard({ post, i }: { post: Post; i: number }) {
         >
           <span className="mono" style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>by {post.author}</span>
           <motion.a
-            href="#"
+            href={post.url || "#"}
+            target={post.url ? "_blank" : undefined}
+            rel={post.url ? "noopener noreferrer" : undefined}
             whileHover={{ x: 4 }}
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,

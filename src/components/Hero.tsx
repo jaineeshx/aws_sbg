@@ -269,7 +269,7 @@ export default function Hero() {
                   transition={{ delay: 0.95, duration: 0.6 }}
                   style={{ display: "flex", flexWrap: "wrap", gap: 14, alignItems: "center" }}
                 >
-                  <a href="#join" className="btn-orange" id="hero-join">
+                  <a href="#footer-social" className="btn-orange" id="hero-join">
                     Join the builders <ArrowRight size={17} />
                   </a>
                   <a href="#projects" className="btn-ghost" id="hero-projects">

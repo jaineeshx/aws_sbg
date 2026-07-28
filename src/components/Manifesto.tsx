@@ -94,7 +94,7 @@ export default function Manifesto() {
             </span>
           </p>
           <motion.a
-            href="#join"
+            href="#footer-social"
             whileHover={{ x: 6 }}
             transition={{ type: "spring", stiffness: 300 }}
             style={{

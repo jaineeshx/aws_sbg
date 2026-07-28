@@ -21,41 +21,16 @@ interface Ev {
 }
 
 const EVENTS: Ev[] = [
-  { id: "orientation", title: "Orientation & Kickoff", type: "Meetup",
-    date: "July 2026 · Week 3", dateShort: "JUL '26", time: "2:00 – 4:00 PM",
-    location: "RV University, Bengaluru",
-    desc: "Meet the team, explore AWS SBG, and find your builder track. Pizza included.",
+  { id: "rvu-santhe", title: "RVU Santhe", type: "Meetup",
+    date: "July 31", dateShort: "JUL 31", time: "TBD",
+    location: "RV University",
+    desc: "RVU Santhe is an annual tradition at RV University where every club on campus introduces itself to the incoming freshman batch. We'll be participating to introduce the AWS Student Builder Group, showcase our activities, and show how new students can get involved.",
     tags: ["Community", "Intro"] },
-  { id: "kiro", title: "Build with Kiro Workshop", type: "Workshop",
-    date: "August 2026 · Week 2", dateShort: "AUG '26", time: "10:00 AM – 1:00 PM",
-    location: "Computer Lab, RV University",
-    desc: "Hands-on with AWS Kiro — the AI-powered IDE. Build a full project in 3 hours.",
-    tags: ["Kiro", "AI", "Dev Tools"], spotsLeft: 42 },
-  { id: "networking", title: "Networking & Career Guidance", type: "Meetup",
-    date: "September 2026 · Week 2", dateShort: "SEP '26", time: "3:00 – 5:00 PM",
-    location: "Auditorium, RV University",
-    desc: "Connect with AWS professionals and alumni. Learn how cloud skills translate into real careers.",
-    tags: ["Career", "Networking"] },
-  { id: "fundamentals", title: "AWS Cloud Fundamentals", type: "Workshop",
-    date: "September 2026 · Week 4", dateShort: "SEP '26", time: "10:00 AM – 2:00 PM",
-    location: "Lab Block, RV University",
-    desc: "Zero-to-cloud: EC2, S3, IAM, VPC — hands on. Prep for AWS Cloud Practitioner.",
-    tags: ["EC2", "S3", "IAM", "Certification"] },
-  { id: "advanced", title: "Advanced AWS Services Deep Dive", type: "Workshop",
-    date: "January 2027 · Week 1", dateShort: "JAN '27", time: "10:00 AM – 4:00 PM",
-    location: "RV University",
-    desc: "Lambda, DynamoDB, API Gateway, Bedrock. Build a serverless + AI app in a day.",
-    tags: ["Lambda", "DynamoDB", "Bedrock", "Serverless"] },
-  { id: "community-day", title: "AWS Student Community Day", type: "Flagship",
-    date: "January 2027 · Last Week", dateShort: "JAN '27", time: "9:00 AM – 6:00 PM",
+  { id: "kickoff", title: "AWS SBG Kickoff & Cloud Fundamentals", type: "Flagship",
+    date: "Tentative — Late August 2026 (exact date coming soon)", dateShort: "AUG '26", time: "TBD",
     location: "RV University", featured: true,
-    desc: "Our flagship annual event. Student speakers, project demos, AWS cert drives, and the biggest builder network in the city.",
-    tags: ["Community Day", "Flagship", "Talks", "Demos"] },
-  { id: "hackathon", title: "Build Sprint Hackathon", type: "Hackathon",
-    date: "February 2027 · Mid", dateShort: "FEB '27", time: "9:00 AM – 9:00 PM",
-    location: "RV University",
-    desc: "12-hour build sprint. Real problems, real AWS credits, real prizes. Ship or go home.",
-    tags: ["Hackathon", "AWS Credits", "Prizes"] },
+    desc: "The official kickoff event for the AWS Student Builder Group this year, introducing new and existing members to cloud computing fundamentals and the group's roadmap for the year.",
+    tags: ["Kickoff", "Cloud", "Fundamentals"] },
 ];
 
 function Card({ ev, i }: { ev: Ev; i: number }) {
@@ -201,7 +176,7 @@ export default function Events() {
             initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.2 }}
             style={{ fontSize: 18, color: "rgba(255,255,255,0.5)", maxWidth: 520, lineHeight: 1.65 }}
           >
-            7 events lined up for 2026–27. Workshops, hackathons, community days — pick your battles.
+            Events lined up for 2026–27. Workshops, hackathons, community days — pick your battles.
           </motion.p>
         </div>
 
@@ -223,7 +198,7 @@ export default function Events() {
           className="mono"
         >
           <span style={{ color: "rgba(255,255,255,0.25)" }}>More events throughout the year. → </span>
-          <a href="#join" style={{ color: "#FF9900", textDecoration: "none" }}>Stay plugged in</a>
+          <a href="#footer-social" style={{ color: "#FF9900", textDecoration: "none" }}>Stay plugged in</a>
         </motion.p>
       </div>
     </section>

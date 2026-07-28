@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
@@ -40,13 +41,8 @@ export default function Navbar() {
         <div style={{ ...W, display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
           {/* Logo */}
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-            <div style={{ width: 36, height: 36, flexShrink: 0 }}>
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
-                <rect width="40" height="40" rx="9" fill="#FF9900"/>
-                <path d="M8 22L12 14L16 22M9.5 20H14.5" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-                <path d="M17 14L19.5 22L22 17L24.5 22L27 14" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M29 18C29 18 28 16 26.5 16C25 16 24 17 24 18.5C24 20 25.5 20.5 27 21C28.5 21.5 29 22 29 23C29 24 28 25 26.5 25C25 25 24 24 24 24" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-              </svg>
+            <div style={{ width: 40, height: 40, flexShrink: 0, position: "relative" }}>
+              <Image src="/logo-sbg.svg" alt="AWS Student Builder Group Logo" fill style={{ objectFit: "contain" }} />
             </div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>AWS SBG</div>
@@ -85,7 +81,7 @@ export default function Navbar() {
           {/* CTA */}
           <div className="desktop-nav">
             <motion.a
-              href="#join"
+              href="#footer-social"
               whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.97 }}
               className="btn-orange"
               style={{ padding: "10px 22px", fontSize: 14 }}
@@ -148,7 +144,7 @@ export default function Navbar() {
               </motion.a>
             ))}
             <motion.a
-              href="#join"
+              href="#footer-social"
               initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}
               onClick={() => setOpen(false)}
               className="btn-orange"

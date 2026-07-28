@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Manifesto from "@/components/Manifesto";
-import Stats from "@/components/Stats";
+
 import Events from "@/components/Events";
 import Projects from "@/components/Projects";
 import Team from "@/components/Team";
@@ -16,7 +16,7 @@ export default function Home() {
       <main>
         <Hero />
         <Manifesto />
-        <Stats />
+
         <Events />
         <Projects />
         <Team />

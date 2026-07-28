@@ -1,12 +1,13 @@
 "use client";
 import { motion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
+import Image from "next/image";
 
 const W = { maxWidth: 1160, margin: "0 auto", padding: "0 clamp(24px, 5vw, 60px)" } as const;
 
-const GithubSvg = () => (
+const MeetupSvg = () => (
   <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+    <path d="M12 24c6.627 0 12-5.373 12-12S18.627 0 12 0 0 5.373 0 12s5.373 12 12 12zm0-22c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm1.633 6.13a1.597 1.597 0 0 0-1.282.66l-1.636 2.16-1.554-1.666a1.59 1.59 0 0 0-1.18-.544c-.454 0-.89.19-1.196.53L4.767 11.53a.855.855 0 0 0 .093 1.201.856.856 0 0 0 1.2-.094l1.325-1.535 1.565 1.676a1.583 1.583 0 0 0 2.274.116L13.1 10.36l1.626 2.06c.21.266.528.423.868.423a1.107 1.107 0 0 0 1.107-1.107V8.13h-3.068z" />
   </svg>
 );
 const InstaSvg = () => (
@@ -23,11 +24,11 @@ const LinkedInSvg = () => (
 const LINKS = [
   { heading: "Navigate", items: [
     { l: "Events", h: "#events" }, { l: "Team", h: "#team" },
-    { l: "Projects", h: "#projects" }, { l: "Blog", h: "#blog" }, { l: "Join", h: "#join" },
+    { l: "Projects", h: "#projects" }, { l: "Blog", h: "#blog" }, { l: "Join", h: "#footer-social" },
   ]},
   { heading: "Community", items: [
-    { l: "WhatsApp Group", h: "#" }, { l: "LinkedIn Page", h: "#" },
-    { l: "Instagram", h: "#" }, { l: "GitHub Org", h: "#" },
+    { l: "WhatsApp Community", h: "#" }, { l: "LinkedIn Page", h: "#" },
+    { l: "Instagram", h: "#" },
   ]},
   { heading: "Resources", items: [
     { l: "AWS Free Tier", h: "https://aws.amazon.com/free", ext: true },
@@ -39,7 +40,7 @@ const LINKS = [
 const SOCIALS = [
   { Icon: LinkedInSvg, label: "LinkedIn", href: "#" },
   { Icon: InstaSvg,    label: "Instagram", href: "#" },
-  { Icon: GithubSvg,  label: "GitHub",    href: "#" },
+  { Icon: MeetupSvg,   label: "Meetup",    href: "https://www.meetup.com/aws-sbg-at-rv-university/" },
 ];
 
 export default function Footer() {
@@ -60,12 +61,7 @@ export default function Footer() {
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 36, height: 36 }}>
-                  <svg viewBox="0 0 40 40" fill="none" style={{ width: "100%", height: "100%" }}>
-                    <rect width="40" height="40" rx="9" fill="#FF9900"/>
-                    <path d="M8 22L12 14L16 22M9.5 20H14.5" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-                    <path d="M17 14L19.5 22L22 17L24.5 22L27 14" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M29 18C29 18 28 16 26.5 16C25 16 24 17 24 18.5C24 20 25.5 20.5 27 21C28.5 21.5 29 22 29 23C29 24 28 25 26.5 25C25 25 24 24 24 24" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-                  </svg>
+                  <Image src="/logo-sbg.svg" alt="AWS SBG Logo" width={36} height={36} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                 </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>AWS SBG</div>
@@ -79,7 +75,7 @@ export default function Footer() {
                 We&apos;re building what&apos;s missing —<br />a builder-first community.
               </p>
 
-              <div style={{ display: "flex", gap: 8 }}>
+              <div id="footer-social" style={{ display: "flex", gap: 8 }}>
                 {SOCIALS.map(({ Icon, label, href }) => (
                   <motion.a
                     key={label} href={href} aria-label={label}
@@ -106,33 +102,7 @@ export default function Footer() {
                 ))}
               </div>
 
-              {/* Newsletter */}
-              <div>
-                <p className="mono" style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginBottom: 10 }}>
-                  Build logs to your inbox
-                </p>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input
-                    type="email" placeholder="your@email.com" id="footer-newsletter"
-                    style={{
-                      flex: 1, padding: "10px 14px", borderRadius: 10, fontSize: 13,
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      color: "#fff", fontFamily: "inherit", outline: "none",
-                    }}
-                  />
-                  <button
-                    id="footer-subscribe"
-                    style={{
-                      padding: "10px 16px", borderRadius: 10, fontSize: 14,
-                      background: "#FF9900", color: "#000", fontWeight: 700, cursor: "pointer",
-                      border: "none", flexShrink: 0,
-                    }}
-                  >
-                    →
-                  </button>
-                </div>
-              </div>
+
             </div>
 
             {/* Link columns */}

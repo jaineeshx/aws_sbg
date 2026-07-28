@@ -177,7 +177,7 @@ export default function Join() {
                 </motion.div>
                 <h3 style={{ fontSize: 24, fontWeight: 700, color: "#fff", marginBottom: 12 }}>You&apos;re in. 🎉</h3>
                 <p style={{ color: "rgba(255,255,255,0.5)", lineHeight: 1.65 }}>
-                  Welcome to AWS SBG @ RV University. Check your email for the WhatsApp group invite and next steps.
+                  Welcome to AWS SBG @ RV University. Check your email for the WhatsApp Community invite and next steps.
                 </p>
               </motion.div>
             ) : (
