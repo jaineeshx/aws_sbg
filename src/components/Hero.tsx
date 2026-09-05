@@ -1,48 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
-
-/* ── typewriter ─────────────────────────────────────────────────────────────── */
-function Typewriter({ words }: { words: string[] }) {
-  const [text, setText] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [loopNum, setLoopNum] = useState(0);
-  const [typingSpeed, setTypingSpeed] = useState(150);
-
-  useEffect(() => {
-    const handleType = () => {
-      const i = loopNum % words.length;
-      const fullText = words[i];
-
-      setText(
-        isDeleting
-          ? fullText.substring(0, text.length - 1)
-          : fullText.substring(0, text.length + 1)
-      );
-
-      setTypingSpeed(isDeleting ? 30 : 150);
-
-      if (!isDeleting && text === fullText) {
-        setTimeout(() => setIsDeleting(true), 1500);
-      } else if (isDeleting && text === "") {
-        setIsDeleting(false);
-        setLoopNum(loopNum + 1);
-      }
-    };
-
-    const timer = setTimeout(handleType, typingSpeed);
-    return () => clearTimeout(timer);
-  }, [text, isDeleting, loopNum, typingSpeed, words]);
-
-  return (
-    <span style={{ display: "inline-block", whiteSpace: "nowrap" }}>
-      {text}
-      <span className="blink" style={{ color: "#FF9900", marginLeft: 4 }}>|</span>
-    </span>
-  );
-}
+import gsap from "gsap";
 
 /* ── shared layout constants ───────────────────────────────────────────────── */
 export const W = { maxWidth: 1160, margin: "0 auto", padding: "0 clamp(24px, 5vw, 60px)" } as const;
@@ -80,6 +41,49 @@ const SECTIONS = [
   { name: "blog",       id: "blog",          desc: "technical writeups & deep-dives" },
   { name: "join",       id: "footer-social", desc: "membership & community links" },
 ];
+
+const STAT_PROOFS: Record<string, { cmd: string; lines: TerminalLine[] }> = {
+  members: {
+    cmd: "members",
+    lines: [
+      { t: "200+ builders", c: "#FF9900" },
+      { t: "RV University · Bangalore, IN", c: "rgba(255,255,255,0.7)" },
+      { t: "", c: "" },
+      { t: "COMMUNITY STATUS: ACTIVE ✓", c: "#22C55E" },
+      { t: "DISCORD & MEETUP: SYNCHRONIZED", c: "rgba(255,255,255,0.4)" },
+    ],
+  },
+  projects: {
+    cmd: "projects",
+    lines: [
+      { t: "15+ projects shipped", c: "#FF9900" },
+      { t: "AWS infrastructure deployed", c: "rgba(255,255,255,0.7)" },
+      { t: "", c: "" },
+      { t: "PIPELINE: PROD VERIFIED ✓", c: "#22C55E" },
+      { t: "STACK: LAMBDA · CDK · S3 · DYNAMODB", c: "rgba(255,255,255,0.4)" },
+    ],
+  },
+  certs: {
+    cmd: "certs",
+    lines: [
+      { t: "40+ certifications earned", c: "#FF9900" },
+      { t: "Cloud Practitioner & Solutions Architect", c: "rgba(255,255,255,0.7)" },
+      { t: "", c: "" },
+      { t: "EXAM PASS RATE: 94% ✓", c: "#22C55E" },
+      { t: "SKILL ACCREDITATION: VERIFIED", c: "rgba(255,255,255,0.4)" },
+    ],
+  },
+  events: {
+    cmd: "events",
+    lines: [
+      { t: "8 community events hosted", c: "#FF9900" },
+      { t: "Hands-on bootcamps & AWS build nights", c: "rgba(255,255,255,0.7)" },
+      { t: "", c: "" },
+      { t: "ATTENDANCE RATE: 98% ✓", c: "#22C55E" },
+      { t: "NEXT SESSION: UPCOMING", c: "#38BDF8" },
+    ],
+  },
+};
 
 function Terminal() {
   const [bootCount, setBootCount] = useState<number>(0);
@@ -131,6 +135,17 @@ function Terminal() {
     ];
 
     switch (mainCmd) {
+      case "members":
+      case "projects":
+      case "certs":
+      case "events": {
+        const proof = STAT_PROOFS[mainCmd];
+        if (proof) {
+          proof.lines.forEach((l) => output.push(l));
+        }
+        break;
+      }
+
       case "ls":
       case "dir":
         output.push({ t: "total 7 sections", c: "rgba(255,255,255,0.3)" });
@@ -176,6 +191,10 @@ function Terminal() {
         output.push({ t: "AWS-SBG Interactive Shell v1.0", c: "#FF9900" });
         output.push({ t: "  ls            list all website sections", c: "#38BDF8" });
         output.push({ t: "  cd <section>  jump directly to any section", c: "rgba(255,255,255,0.7)" });
+        output.push({ t: "  members       inspect active builder community proof", c: "#FF9900" });
+        output.push({ t: "  projects      inspect shipped cloud architectures", c: "#FF9900" });
+        output.push({ t: "  certs         inspect AWS credentials & pass rates", c: "#FF9900" });
+        output.push({ t: "  events        inspect workshops and bootcamps", c: "#FF9900" });
         output.push({ t: "  cat <section> read section description", c: "rgba(255,255,255,0.7)" });
         output.push({ t: "  whoami        display builder credentials", c: "rgba(255,255,255,0.7)" });
         output.push({ t: "  join          jump to community links", c: "rgba(255,255,255,0.7)" });
@@ -312,7 +331,7 @@ function Terminal() {
             <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#FEBC2E", opacity: 0.85 }} />
             <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#28C840", opacity: 0.85 }} />
             <span className="mono" style={{ marginLeft: 8, fontSize: 12, color: "rgba(255,255,255,0.3)", letterSpacing: "0.02em" }}>
-              aws-sbg — terminal (interactive)
+              aws-sbg — terminal
             </span>
           </div>
           <span className="mono" style={{ fontSize: 10, color: "rgba(255,153,0,0.6)", background: "rgba(255,153,0,0.08)", padding: "2px 8px", borderRadius: 4 }}>
@@ -421,21 +440,143 @@ function Terminal() {
   );
 }
 
-/* ── word reveal ─────────────────────────────────────────────────────────────── */
-const wordVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.1 } },
-};
-const word = {
-  hidden: { y: 80, opacity: 0, skewY: 4 },
-  show: { y: 0, opacity: 1, skewY: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
-};
+
+/* ── data trace connector ────────────────────────────────────────────────────── */
+function DataTrace({ headlineRef, terminalRef }: {
+  headlineRef: React.RefObject<HTMLDivElement | null>;
+  terminalRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const pathRef = useRef<SVGPathElement>(null);
+  const dotRef = useRef<SVGCircleElement>(null);
+  const [pathD, setPathD] = useState("");
+  const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
+
+  // Measure & draw the path between headline right-edge and terminal top-left
+  const measure = useCallback(() => {
+    const hl = headlineRef.current;
+    const tm = terminalRef.current;
+    const parent = hl?.closest(".hero-grid-top") as HTMLElement | null;
+    if (!hl || !tm || !parent) return;
+
+    const pr = parent.getBoundingClientRect();
+    const hr = hl.getBoundingClientRect();
+    const tr = tm.getBoundingClientRect();
+
+    // Start: right edge of headline, vertically centered
+    const x1 = hr.right - pr.left + 12;
+    const y1 = hr.top - pr.top + hr.height * 0.5;
+    // End: left edge of terminal, ~28px down from top (into the body)
+    const x2 = tr.left - pr.left - 4;
+    const y2 = tr.top - pr.top + 48;
+
+    // Midpoint for the elbow
+    const mx = x2 - 16;
+
+    const w = Math.max(x2 + 20, 100);
+    const h = Math.max(y2 + 20, 100);
+
+    setSvgSize({ w, h });
+    // Horizontal from headline → elbow, then curve down → terminal
+    setPathD(`M ${x1},${y1} L ${mx},${y1} Q ${x2},${y1} ${x2},${y1 + 16} L ${x2},${y2}`);
+  }, [headlineRef, terminalRef]);
+
+  useEffect(() => {
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [measure]);
+
+  // GSAP draw-on animation after path is set
+  useEffect(() => {
+    const path = pathRef.current;
+    const dot = dotRef.current;
+    if (!path || !pathD) return;
+
+    const len = path.getTotalLength();
+    gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
+    gsap.to(path, {
+      strokeDashoffset: 0,
+      duration: 1.2,
+      delay: 0.9,
+      ease: "power2.inOut",
+    });
+
+    // Pulse the dot at the endpoint
+    if (dot) {
+      // Parse endpoint from pathD: last segment is "L x2,y2"
+      const segments = pathD.trim().split(" ");
+      const lastCoord = segments[segments.length - 1];
+      const [ex, ey] = lastCoord.split(",").map(Number);
+      gsap.set(dot, { attr: { cx: ex, cy: ey }, opacity: 0 });
+      gsap.to(dot, {
+        opacity: 0.7,
+        duration: 0.5,
+        delay: 2.1,
+        ease: "power2.out",
+      });
+      gsap.to(dot, {
+        attr: { r: 4 },
+        opacity: 0.3,
+        duration: 1.4,
+        delay: 2.6,
+        ease: "sine.inOut",
+        repeat: -1,
+        yoyo: true,
+      });
+    }
+  }, [pathD]);
+
+  if (!pathD || svgSize.w === 0) return null;
+
+  return (
+    <svg
+      ref={svgRef}
+      width={svgSize.w}
+      height={svgSize.h}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        pointerEvents: "none",
+        zIndex: 5,
+        overflow: "visible",
+      }}
+    >
+      <path
+        ref={pathRef}
+        d={pathD}
+        fill="none"
+        stroke="rgba(255,153,0,0.15)"
+        strokeWidth={1}
+        strokeLinecap="round"
+      />
+      {/* Small flowing dot */}
+      <circle
+        ref={dotRef}
+        r={2.5}
+        fill="#FF9900"
+        opacity={0}
+        style={{ filter: "drop-shadow(0 0 4px rgba(255,153,0,0.6))" }}
+      />
+      {/* Small arrow at endpoint */}
+      <polygon
+        points={`${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[0]) - 3},${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[1]) + 1} ${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[0]) + 3},${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[1]) + 1} ${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[0])},${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[1]) + 6}`}
+        fill="rgba(255,153,0,0.2)"
+        style={{ opacity: 0, animation: "fadeInTrace 0.4s ease-out 2.1s forwards" }}
+      />
+    </svg>
+  );
+}
+
 
 /* ── hero ────────────────────────────────────────────────────────────────────── */
 export default function Hero() {
   const { scrollY } = useScroll();
   const yParallax = useTransform(scrollY, [0, 700], [0, -80]);
   const smooth = useSpring(yParallax, { stiffness: 60, damping: 18 });
+  const headlineRef = useRef<HTMLDivElement>(null);
+  const terminalColRef = useRef<HTMLDivElement>(null);
 
   return (
     <section
@@ -510,6 +651,7 @@ export default function Hero() {
               grid-template-columns: 1fr;
               gap: 36px;
               align-items: start;
+              position: relative;
             }
             .hero-terminal-col {
               width: 100%;
@@ -525,6 +667,12 @@ export default function Hero() {
               .hero-terminal-col {
                 margin-top: 14px;
               }
+            }
+            @media (max-width: 899px) {
+              .hero-data-trace { display: none !important; }
+            }
+            @keyframes fadeInTrace {
+              from { opacity: 0; } to { opacity: 1; }
             }
           `}</style>
 
@@ -564,7 +712,7 @@ export default function Hero() {
                 </motion.div>
 
                 {/* Headline */}
-                <div style={{ minHeight: "1.25em", height: "1.25em", display: "flex", alignItems: "center" }}>
+                <div ref={headlineRef} style={{ display: "flex", alignItems: "center" }}>
                   <h1
                     style={{
                       fontWeight: 800,
@@ -576,7 +724,8 @@ export default function Hero() {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    <Typewriter words={["Build With Us.", "Build With Kiro.", "Build With AWS."]} />
+                    Build With AWS<span style={{ color: "#FF9900" }}>.</span>
+                    <span className="blink" style={{ color: "#FF9900", marginLeft: 2, fontWeight: 400 }}>|</span>
                   </h1>
                 </div>
 
@@ -611,8 +760,13 @@ export default function Hero() {
               </div>
 
               {/* RIGHT COLUMN — Terminal positioned at the top right next to header text */}
-              <div className="hero-terminal-col" id="hero-terminal-col">
+              <div className="hero-terminal-col" id="hero-terminal-col" ref={terminalColRef}>
                 <Terminal />
+              </div>
+
+              {/* Data trace: headline → terminal */}
+              <div className="hero-data-trace" style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "visible" }}>
+                <DataTrace headlineRef={headlineRef} terminalRef={terminalColRef} />
               </div>
 
             </div>
@@ -623,19 +777,28 @@ export default function Hero() {
               animate={{ opacity: 1 }}
               transition={{ delay: 1.15 }}
               style={{
-                display: "flex", gap: "clamp(24px, 5vw, 56px)", paddingTop: 28,
+                display: "flex", gap: "clamp(16px, 3.5vw, 40px)", paddingTop: 28,
                 borderTop: "1px solid rgba(255,255,255,0.07)",
                 flexWrap: "wrap",
                 alignItems: "center",
               }}
             >
-              {[["200+", "Members"], ["15+", "Projects"], ["40+", "Certs"], ["8", "Events"]].map(([val, label], i) => (
+              {[
+                { val: "200+", label: "Members" },
+                { val: "15+", label: "Projects" },
+                { val: "40+", label: "Certs" },
+                { val: "8", label: "Events" },
+              ].map(({ val, label }, i) => (
                 <motion.div
                   key={label}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1.15 + i * 0.08 }}
-                  style={{ minWidth: 90 }}
+                  style={{
+                    minWidth: 95,
+                    padding: "6px 12px",
+                    borderRadius: 12,
+                  }}
                 >
                   <div
                     style={{
@@ -650,7 +813,13 @@ export default function Hero() {
                   </div>
                   <div
                     className="mono"
-                    style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginTop: 5 }}
+                    style={{
+                      fontSize: 10,
+                      letterSpacing: "0.2em",
+                      textTransform: "uppercase",
+                      color: "rgba(255,255,255,0.28)",
+                      marginTop: 5,
+                    }}
                   >
                     {label}
                   </div>
