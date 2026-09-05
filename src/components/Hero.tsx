@@ -443,16 +443,19 @@ function Terminal() {
 
 /* ── data trace connector ────────────────────────────────────────────────────── */
 function DataTrace({ headlineRef, terminalRef }: {
-  headlineRef: React.RefObject<HTMLDivElement | null>;
-  terminalRef: React.RefObject<HTMLDivElement | null>;
+  headlineRef: React.RefObject<HTMLElement | null>;
+  terminalRef: React.RefObject<HTMLElement | null>;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const dotRef = useRef<SVGCircleElement>(null);
   const [pathD, setPathD] = useState("");
   const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
+  const [points, setPoints] = useState<{ x1: number; y1: number; x2: number; y2: number }>({
+    x1: 0, y1: 0, x2: 0, y2: 0,
+  });
 
-  // Measure & draw the path between headline right-edge and terminal top-left
+  // Measure & draw path: top-middle of headline → up above → across → down into top of terminal
   const measure = useCallback(() => {
     const hl = headlineRef.current;
     const tm = terminalRef.current;
@@ -463,28 +466,48 @@ function DataTrace({ headlineRef, terminalRef }: {
     const hr = hl.getBoundingClientRect();
     const tr = tm.getBoundingClientRect();
 
-    // Start: right edge of headline, vertically centered
-    const x1 = hr.right - pr.left + 12;
-    const y1 = hr.top - pr.top + hr.height * 0.5;
-    // End: left edge of terminal, ~28px down from top (into the body)
-    const x2 = tr.left - pr.left - 4;
-    const y2 = tr.top - pr.top + 48;
+    // Start: middle of "Build With AWS." at top edge
+    const x1 = hr.left - pr.left + hr.width * 0.5;
+    const y1 = hr.top - pr.top;
 
-    // Midpoint for the elbow
-    const mx = x2 - 16;
+    // End: top edge of terminal, exactly in the middle of the terminal
+    const x2 = tr.left - pr.left + tr.width * 0.5;
+    const y2 = tr.top - pr.top;
 
-    const w = Math.max(x2 + 20, 100);
-    const h = Math.max(y2 + 20, 100);
+    // Height of the overhead bridge: rises above both headline and terminal
+    const archClearance = 24;
+    const y_top = Math.max(6, Math.min(y1, y2) - archClearance);
+
+    // Corner fillets
+    const r = Math.min(14, Math.max(6, (x2 - x1) / 3));
+    const ry1 = Math.min(r, Math.abs(y1 - y_top) / 2);
+    const ry2 = Math.min(r, Math.abs(y2 - y_top) / 2);
+
+    const w = Math.max(x1 + 40, x2 + 40, 100);
+    const h = Math.max(y1 + 40, y2 + 40, 100);
 
     setSvgSize({ w, h });
-    // Horizontal from headline → elbow, then curve down → terminal
-    setPathD(`M ${x1},${y1} L ${mx},${y1} Q ${x2},${y1} ${x2},${y1 + 16} L ${x2},${y2}`);
+    setPoints({ x1, y1, x2, y2 });
+
+    // Up from middle of headline → curve right → horizontal bridge → curve down into middle of terminal
+    setPathD(
+      `M ${x1},${y1} L ${x1},${y_top + ry1} Q ${x1},${y_top} ${x1 + r},${y_top} L ${x2 - r},${y_top} Q ${x2},${y_top} ${x2},${y_top + ry2} L ${x2},${y2}`
+    );
   }, [headlineRef, terminalRef]);
 
   useEffect(() => {
     measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    const handleResize = () => measure();
+    window.addEventListener("resize", handleResize);
+
+    const t1 = setTimeout(measure, 150);
+    const t2 = setTimeout(measure, 600);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [measure]);
 
   // GSAP draw-on animation after path is set
@@ -498,34 +521,30 @@ function DataTrace({ headlineRef, terminalRef }: {
     gsap.to(path, {
       strokeDashoffset: 0,
       duration: 1.2,
-      delay: 0.9,
+      delay: 0.8,
       ease: "power2.inOut",
     });
 
-    // Pulse the dot at the endpoint
-    if (dot) {
-      // Parse endpoint from pathD: last segment is "L x2,y2"
-      const segments = pathD.trim().split(" ");
-      const lastCoord = segments[segments.length - 1];
-      const [ex, ey] = lastCoord.split(",").map(Number);
-      gsap.set(dot, { attr: { cx: ex, cy: ey }, opacity: 0 });
+    // Pulse the dot at the terminal endpoint
+    if (dot && points.x2 && points.y2) {
+      gsap.set(dot, { attr: { cx: points.x2, cy: points.y2 }, opacity: 0 });
       gsap.to(dot, {
-        opacity: 0.7,
-        duration: 0.5,
-        delay: 2.1,
+        opacity: 0.85,
+        duration: 0.4,
+        delay: 2.0,
         ease: "power2.out",
       });
       gsap.to(dot, {
-        attr: { r: 4 },
-        opacity: 0.3,
+        attr: { r: 4.5 },
+        opacity: 0.35,
         duration: 1.4,
-        delay: 2.6,
+        delay: 2.4,
         ease: "sine.inOut",
         repeat: -1,
         yoyo: true,
       });
     }
-  }, [pathD]);
+  }, [pathD, points]);
 
   if (!pathD || svgSize.w === 0) return null;
 
@@ -543,27 +562,64 @@ function DataTrace({ headlineRef, terminalRef }: {
         overflow: "visible",
       }}
     >
+      <defs>
+        <linearGradient id="traceGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#FF9900" stopOpacity="0.45" />
+          <stop offset="50%" stopColor="#FF9900" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#FF9900" stopOpacity="0.45" />
+        </linearGradient>
+      </defs>
+
+      {/* Main glowing overhead segment path */}
       <path
         ref={pathRef}
         d={pathD}
         fill="none"
-        stroke="rgba(255,153,0,0.15)"
-        strokeWidth={1}
+        stroke="url(#traceGrad)"
+        strokeWidth={1.5}
         strokeLinecap="round"
       />
-      {/* Small flowing dot */}
+
+      {/* Traveling pulse dash representing live data trace */}
+      <path
+        d={pathD}
+        fill="none"
+        stroke="#FF9900"
+        strokeWidth={1.5}
+        strokeDasharray="6 60"
+        className="trace-pulse"
+        opacity={0.8}
+        style={{ filter: "drop-shadow(0 0 6px rgba(255,153,0,0.9))" }}
+      />
+
+      {/* Origin node dot at the top middle of "Build With AWS" */}
       <circle
-        ref={dotRef}
+        cx={points.x1}
+        cy={points.y1}
         r={2.5}
         fill="#FF9900"
-        opacity={0}
-        style={{ filter: "drop-shadow(0 0 4px rgba(255,153,0,0.6))" }}
+        opacity={0.85}
+        style={{ filter: "drop-shadow(0 0 6px rgba(255,153,0,0.9))" }}
       />
-      {/* Small arrow at endpoint */}
+
+      {/* Terminal contact node dot */}
+      <circle
+        ref={dotRef}
+        r={3}
+        fill="#FF9900"
+        opacity={0}
+        style={{ filter: "drop-shadow(0 0 8px rgba(255,153,0,0.95))" }}
+      />
+
+      {/* Arrowhead pointing into terminal top */}
       <polygon
-        points={`${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[0]) - 3},${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[1]) + 1} ${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[0]) + 3},${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[1]) + 1} ${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[0])},${parseFloat(pathD.split(" ").slice(-1)[0].split(",")[1]) + 6}`}
-        fill="rgba(255,153,0,0.2)"
-        style={{ opacity: 0, animation: "fadeInTrace 0.4s ease-out 2.1s forwards" }}
+        points={`${points.x2 - 3.5},${points.y2 - 6} ${points.x2 + 3.5},${points.y2 - 6} ${points.x2},${points.y2}`}
+        fill="#FF9900"
+        style={{
+          opacity: 0,
+          animation: "fadeInTrace 0.4s ease-out 2.0s forwards",
+          filter: "drop-shadow(0 0 4px rgba(255,153,0,0.8))",
+        }}
       />
     </svg>
   );
@@ -575,7 +631,7 @@ export default function Hero() {
   const { scrollY } = useScroll();
   const yParallax = useTransform(scrollY, [0, 700], [0, -80]);
   const smooth = useSpring(yParallax, { stiffness: 60, damping: 18 });
-  const headlineRef = useRef<HTMLDivElement>(null);
+  const headlineRef = useRef<HTMLHeadingElement>(null);
   const terminalColRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -652,6 +708,7 @@ export default function Hero() {
               gap: 36px;
               align-items: start;
               position: relative;
+              padding-top: 16px;
             }
             .hero-terminal-col {
               width: 100%;
@@ -663,6 +720,7 @@ export default function Hero() {
                 grid-template-columns: minmax(0, 1.15fr) minmax(380px, 490px);
                 gap: 52px;
                 align-items: start;
+                padding-top: 36px;
               }
               .hero-terminal-col {
                 margin-top: 14px;
@@ -674,6 +732,14 @@ export default function Hero() {
             @keyframes fadeInTrace {
               from { opacity: 0; } to { opacity: 1; }
             }
+            @keyframes traceFlow {
+              to {
+                stroke-dashoffset: -66;
+              }
+            }
+            .trace-pulse {
+              animation: traceFlow 2.2s linear infinite;
+            }
           `}</style>
 
           <div className="hero-layout-wrap">
@@ -683,37 +749,10 @@ export default function Hero() {
               {/* LEFT COLUMN */}
               <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
 
-                {/* Badge */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <div
-                    style={{
-                      display: "inline-flex", alignItems: "center", gap: 10,
-                      padding: "8px 16px", borderRadius: 99,
-                      background: "rgba(255,153,0,0.07)",
-                      border: "1px solid rgba(255,153,0,0.2)",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 7, height: 7, borderRadius: "50%",
-                        background: "#FF9900",
-                        boxShadow: "0 0 8px #FF9900",
-                        animation: "blink 2s ease-in-out infinite",
-                      }}
-                    />
-                    <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: "#FF9900", letterSpacing: "0.06em" }}>
-                      AWS Student Builder Group · RV University
-                    </span>
-                  </div>
-                </motion.div>
-
                 {/* Headline */}
-                <div ref={headlineRef} style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
                   <h1
+                    ref={headlineRef}
                     style={{
                       fontWeight: 800,
                       lineHeight: 1.15,
@@ -722,6 +761,7 @@ export default function Hero() {
                       color: "#fff",
                       margin: 0,
                       whiteSpace: "nowrap",
+                      display: "inline-block",
                     }}
                   >
                     Build With AWS<span style={{ color: "#FF9900" }}>.</span>
