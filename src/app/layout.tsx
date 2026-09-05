@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "AWS Student Builder Group | RV University",
   description: "We're building what's missing — a builder-first community. AWS SBG at RV University hosts hands-on workshops, hackathons, and real cloud projects for students who ship.",
   keywords: "AWS, cloud computing, student community, RV University, builder, hackathon, workshops, Amazon Web Services",
+  icons: {
+    icon: "/logo-sbg.jpg",
+    apple: "/logo-sbg.jpg",
+  },
   openGraph: {
     title: "AWS Student Builder Group | RV University",
     description: "We're building what's missing — a builder-first community.",

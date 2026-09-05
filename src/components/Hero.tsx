@@ -37,7 +37,7 @@ function Typewriter({ words }: { words: string[] }) {
   }, [text, isDeleting, loopNum, typingSpeed, words]);
 
   return (
-    <span style={{ display: "inline-block", minWidth: 20 }}>
+    <span style={{ display: "inline-block", whiteSpace: "nowrap" }}>
       {text}
       <span className="blink" style={{ color: "#FF9900", marginLeft: 4 }}>|</span>
     </span>
@@ -47,88 +47,377 @@ function Typewriter({ words }: { words: string[] }) {
 /* ── shared layout constants ───────────────────────────────────────────────── */
 export const W = { maxWidth: 1160, margin: "0 auto", padding: "0 clamp(24px, 5vw, 60px)" } as const;
 
-/* ── terminal ───────────────────────────────────────────────────────────────── */
-const LINES = [
-  { t: "$ whoami",                         c: "rgba(255,255,255,0.3)", d: 200 },
-  { t: "→  builder @ RV University",       c: "#FF9900",               d: 700 },
-  { t: "",                                 c: "",                      d: 950 },
-  { t: "$ ./run --community aws-sbg-rvu",  c: "rgba(255,255,255,0.3)", d: 1150 },
-  { t: "",                                 c: "",                      d: 1350 },
-  { t: "Initializing community...",        c: "rgba(255,255,255,0.28)", d: 1550 },
-  { t: "██████████████████  100%",         c: "#FF9900",               d: 2400 },
-  { t: "",                                 c: "",                      d: 2650 },
-  { t: "✓  Members     200+",              c: "#22C55E",               d: 2850 },
-  { t: "✓  Projects    15+",               c: "#22C55E",               d: 3100 },
-  { t: "✓  Certs       40+",               c: "#22C55E",               d: 3350 },
-  { t: "✓  Events      8",                 c: "#22C55E",               d: 3600 },
-  { t: "",                                 c: "",                      d: 3850 },
-  { t: "Ready. You belong here.",          c: "#38BDF8",               d: 4100 },
+/* ── interactive terminal ─────────────────────────────────────────────────── */
+interface TerminalLine {
+  t: string;
+  c?: string;
+  isAction?: boolean;
+  targetId?: string;
+  isCommand?: boolean;
+}
+
+const INITIAL_BOOT_LINES: { t: string; c: string; d: number; isCommand?: boolean }[] = [
+  { t: "whoami",                           c: "",                       d: 150,  isCommand: true },
+  { t: "→ builder @ RV University",        c: "#FF9900",                d: 650 },
+  { t: "",                                 c: "",                       d: 850 },
+  { t: "./run --community aws-sbg",        c: "",                       d: 1050, isCommand: true },
+  { t: "Initializing AWS cloud stack...",  c: "rgba(255,255,255,0.28)", d: 1350 },
+  { t: "██████████████████  100%",         c: "#FF9900",                d: 1900 },
+  { t: "",                                 c: "",                       d: 2100 },
+  { t: "✓ builders shipping    200+",      c: "#22C55E",                d: 2300 },
+  { t: "✓ cloud projects live  15+",       c: "#22C55E",                d: 2550 },
+  { t: "✓ certifications       40+",       c: "#22C55E",                d: 2800 },
+  { t: "",                                 c: "",                       d: 3000 },
+  { t: "Ready. Type 'ls' or 'help' below.", c: "#38BDF8",               d: 3250 },
+];
+
+const SECTIONS = [
+  { name: "hero",       id: "hero",          desc: "top of page & live terminal" },
+  { name: "manifesto",  id: "manifesto",     desc: "builder mission & principles" },
+  { name: "projects",   id: "projects",      desc: "student cloud builds (15+)" },
+  { name: "events",     id: "events",        desc: "workshops, bootcamps & hackathons (8)" },
+  { name: "team",       id: "team",          desc: "student leads & core members" },
+  { name: "blog",       id: "blog",          desc: "technical writeups & deep-dives" },
+  { name: "join",       id: "footer-social", desc: "membership & community links" },
 ];
 
 function Terminal() {
-  const [shown, setShown] = useState<Set<number>>(new Set());
+  const [bootCount, setBootCount] = useState<number>(0);
+  const [customLines, setCustomLines] = useState<TerminalLine[]>([]);
+  const [inputVal, setInputVal] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
+  const [histIndex, setHistIndex] = useState<number>(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
+  // Initial boot animation
   useEffect(() => {
-    const timers = LINES.map((line, i) =>
-      setTimeout(() => setShown((s) => new Set([...s, i])), line.d + 600)
+    const timers = INITIAL_BOOT_LINES.map((_, i) =>
+      setTimeout(() => setBootCount((prev) => Math.max(prev, i + 1)), INITIAL_BOOT_LINES[i].d + 400)
     );
     return () => timers.forEach(clearTimeout);
   }, []);
 
+  // Auto-scroll to bottom on new output
+  useEffect(() => {
+    if (bodyRef.current) {
+      bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
+    }
+  }, [bootCount, customLines]);
+
+  const handleNavigate = (targetId: string) => {
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleCommand = (raw: string) => {
+    const cmd = raw.trim();
+    if (!cmd) {
+      setCustomLines((prev) => [...prev, { t: "", isCommand: true }]);
+      return;
+    }
+
+    setHistory((prev) => [...prev, cmd]);
+    setHistIndex(-1);
+
+    const parts = cmd.split(" ").filter(Boolean);
+    const mainCmd = parts[0]?.toLowerCase() || "";
+    const arg = parts.slice(1).join(" ").toLowerCase();
+
+    const output: TerminalLine[] = [
+      { t: cmd, isCommand: true },
+    ];
+
+    switch (mainCmd) {
+      case "ls":
+      case "dir":
+        output.push({ t: "total 7 sections", c: "rgba(255,255,255,0.3)" });
+        SECTIONS.forEach((s) => {
+          output.push({
+            t: `  📁 ${s.name.padEnd(12)} → ${s.desc}`,
+            c: "#38BDF8",
+            isAction: true,
+            targetId: s.id,
+          });
+        });
+        output.push({ t: "tip: click a section or type 'cd <section>'", c: "#FF9900" });
+        break;
+
+      case "cd":
+        if (!arg || arg === "~" || arg === "/") {
+          handleNavigate("hero");
+          output.push({ t: "→ Returned to root (#hero)", c: "#22C55E" });
+        } else {
+          const cleanArg = arg.replace(/^#/, "");
+          const found = SECTIONS.find(
+            (s) => s.name === cleanArg || s.id === cleanArg || s.name.startsWith(cleanArg)
+          );
+          if (found) {
+            handleNavigate(found.id);
+            output.push({ t: `→ Switched context to #${found.name}`, c: "#22C55E" });
+          } else {
+            output.push({
+              t: `cd: no such section '${arg}'. Type 'ls' to view all sections.`,
+              c: "#EF4444",
+            });
+          }
+        }
+        break;
+
+      case "whoami":
+        output.push({ t: "→ builder @ RV University", c: "#FF9900" });
+        output.push({ t: "→ affiliation: AWS Student Builder Group", c: "rgba(255,255,255,0.7)" });
+        output.push({ t: "→ status: building real cloud projects", c: "#22C55E" });
+        break;
+
+      case "help":
+        output.push({ t: "AWS-SBG Interactive Shell v1.0", c: "#FF9900" });
+        output.push({ t: "  ls            list all website sections", c: "#38BDF8" });
+        output.push({ t: "  cd <section>  jump directly to any section", c: "rgba(255,255,255,0.7)" });
+        output.push({ t: "  cat <section> read section description", c: "rgba(255,255,255,0.7)" });
+        output.push({ t: "  whoami        display builder credentials", c: "rgba(255,255,255,0.7)" });
+        output.push({ t: "  join          jump to community links", c: "rgba(255,255,255,0.7)" });
+        output.push({ t: "  clear         clear terminal screen", c: "rgba(255,255,255,0.7)" });
+        output.push({ t: "  sudo          request root access", c: "rgba(255,255,255,0.7)" });
+        break;
+
+      case "cat":
+        if (!arg) {
+          output.push({ t: "usage: cat <section> (e.g. cat manifesto, cat projects)", c: "rgba(255,255,255,0.4)" });
+        } else if (arg.includes("manifesto")) {
+          output.push({ t: "“A builder-first community at RV University. No theory theatrics.”", c: "#FF9900" });
+        } else if (arg.includes("project")) {
+          output.push({ t: "15+ active cloud projects: Serverless APIs, CDK infra, AI agents.", c: "#22C55E" });
+        } else if (arg.includes("event")) {
+          output.push({ t: "8 past & upcoming events: AWS build bootcamps, hands-on cloud labs.", c: "#38BDF8" });
+        } else if (arg.includes("team")) {
+          output.push({ t: "Student leads & organizers championing AWS at RV University.", c: "rgba(255,255,255,0.7)" });
+        } else if (arg.includes("blog")) {
+          output.push({ t: "Deep dives on AWS Lambda, DynamoDB patterns, and builder stories.", c: "rgba(255,255,255,0.7)" });
+        } else if (arg.includes("join")) {
+          output.push({ t: "Connect on Discord & WhatsApp. Open to all students at RVU.", c: "#FF9900" });
+        } else {
+          output.push({ t: `cat: ${arg}: No such section file. Try 'cat manifesto' or 'ls'`, c: "#EF4444" });
+        }
+        break;
+
+      case "join":
+        handleNavigate("footer-social");
+        output.push({ t: "→ Opening builder registration...", c: "#22C55E" });
+        break;
+
+      case "sudo":
+        output.push({ t: "🛡️ Access granted: You are already root. Builders ship with full privileges.", c: "#22C55E" });
+        break;
+
+      case "clear":
+      case "cls":
+        setBootCount(0);
+        setCustomLines([]);
+        return;
+
+      case "matrix":
+        output.push({ t: "Wake up, Neo... The AWS Cloud has you.", c: "#22C55E" });
+        break;
+
+      default:
+        output.push({
+          t: `command not found: ${mainCmd}. Type 'ls' or 'help'.`,
+          c: "#EF4444",
+        });
+        break;
+    }
+
+    setCustomLines((prev) => [...prev, ...output]);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleCommand(inputVal);
+      setInputVal("");
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (history.length > 0) {
+        const nextIdx = histIndex === -1 ? history.length - 1 : Math.max(0, histIndex - 1);
+        setHistIndex(nextIdx);
+        setInputVal(history[nextIdx] || "");
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (history.length > 0 && histIndex !== -1) {
+        const nextIdx = histIndex + 1;
+        if (nextIdx >= history.length) {
+          setHistIndex(-1);
+          setInputVal("");
+        } else {
+          setHistIndex(nextIdx);
+          setInputVal(history[nextIdx] || "");
+        }
+      }
+    }
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 48, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      style={{
-        background: "rgba(6,6,14,0.95)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 22,
-        boxShadow: "0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,153,0,0.05), inset 0 1px 0 rgba(255,255,255,0.04)",
-        backdropFilter: "blur(8px)",
-        overflow: "hidden",
-      }}
-    >
-      {/* Title bar */}
+    <div style={{ position: "relative", width: "100%", perspective: 1200 }}>
+      {/* Subtle ambient orange reflection behind terminal */}
       <div
         style={{
-          display: "flex", alignItems: "center", gap: 8,
-          padding: "14px 20px",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          position: "absolute",
+          inset: "-20px -24px -18px -24px",
+          background: "radial-gradient(ellipse at 50% 30%, rgba(255,153,0,0.12) 0%, rgba(255,153,0,0.03) 50%, transparent 72%)",
+          filter: "blur(32px)",
+          pointerEvents: "none",
+          zIndex: 0,
+          borderRadius: 30,
+          transform: "rotateY(-2deg) rotateX(1.5deg)",
+        }}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 32, scale: 0.96, rotateY: -1, rotateX: 1, rotateZ: -0.3 }}
+        animate={{ opacity: 1, y: 0, scale: 1, rotateY: -2, rotateX: 1.5, rotateZ: -0.6 }}
+        whileHover={{ rotateY: -0.6, rotateX: 0.5, rotateZ: 0, y: -4, transition: { duration: 0.35 } }}
+        transition={{ duration: 0.9, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        onClick={() => inputRef.current?.focus()}
+        style={{
+          position: "relative",
+          zIndex: 1,
+          transformStyle: "preserve-3d",
+          background: "rgba(8, 8, 18, 0.68)",
+          border: "1px solid rgba(255, 255, 255, 0.09)",
+          borderTop: "1px solid rgba(255, 255, 255, 0.18)",
+          borderRadius: 20,
+          boxShadow: "0 30px 65px -12px rgba(0,0,0,0.78), 0 0 40px -8px rgba(255,153,0,0.1), inset 0 1px 0 rgba(255,255,255,0.08), inset 1px 0 0 rgba(255,255,255,0.04)",
+          backdropFilter: "blur(18px)",
+          WebkitBackdropFilter: "blur(18px)",
+          overflow: "hidden",
+          cursor: "text",
         }}
       >
-        <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#FF5F57" }} />
-        <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#FEBC2E" }} />
-        <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#28C840" }} />
-        <span className="mono" style={{ marginLeft: 8, fontSize: 12, color: "rgba(255,255,255,0.2)" }}>
-          aws-sbg — terminal
-        </span>
-      </div>
-
-      {/* Body */}
-      <div className="mono" style={{ padding: "24px 24px 28px", fontSize: 13, lineHeight: 1.8, minHeight: 280 }}>
-        {LINES.map((line, i) => (
-          <div
-            key={i}
-            style={{
-              color: line.c || "transparent",
-              height: line.t === "" ? 8 : "auto",
-              opacity: shown.has(i) ? 1 : 0,
-              transform: shown.has(i) ? "none" : "translateY(6px)",
-              transition: "opacity 0.3s, transform 0.3s",
-              fontSize: 13,
-            }}
-          >
-            {line.t}
+        {/* Title bar */}
+        <div
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "13px 18px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(255,255,255,0.02)",
+            userSelect: "none",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#FF5F57", opacity: 0.85 }} />
+            <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#FEBC2E", opacity: 0.85 }} />
+            <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#28C840", opacity: 0.85 }} />
+            <span className="mono" style={{ marginLeft: 8, fontSize: 12, color: "rgba(255,255,255,0.3)", letterSpacing: "0.02em" }}>
+              aws-sbg — terminal (interactive)
+            </span>
           </div>
-        ))}
-        {/* Cursor */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-          <span style={{ color: "rgba(255,255,255,0.2)" }}>$</span>
-          <span className="blink" style={{ color: "#FF9900", fontSize: 14 }}>█</span>
+          <span className="mono" style={{ fontSize: 10, color: "rgba(255,153,0,0.6)", background: "rgba(255,153,0,0.08)", padding: "2px 8px", borderRadius: 4 }}>
+            typable
+          </span>
         </div>
-      </div>
-    </motion.div>
+
+        {/* Body */}
+        <div
+          ref={bodyRef}
+          className="mono"
+          style={{
+            padding: "20px 22px 20px",
+            fontSize: 13,
+            lineHeight: 1.75,
+            minHeight: 255,
+            maxHeight: 330,
+            overflowY: "auto",
+            scrollbarWidth: "thin",
+            scrollbarColor: "rgba(255,153,0,0.25) transparent",
+          }}
+        >
+          {/* Initial boot lines */}
+          {INITIAL_BOOT_LINES.slice(0, bootCount).map((line, i) => (
+            line.isCommand ? (
+              <div key={`boot-${i}`} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: i === 0 ? 0 : 4 }}>
+                <span style={{ color: "#FF9900", fontWeight: 600, flexShrink: 0 }}>$</span>
+                <span style={{ color: "rgba(255,255,255,0.7)" }}>{line.t}</span>
+              </div>
+            ) : (
+              <div
+                key={`boot-${i}`}
+                style={{
+                  color: line.c || "transparent",
+                  height: line.t === "" ? 6 : "auto",
+                  fontSize: 13,
+                }}
+              >
+                {line.t}
+              </div>
+            )
+          ))}
+
+          {/* Interactive custom command output */}
+          {customLines.map((line, i) => (
+            line.isCommand ? (
+              <div key={`custom-${i}`} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                <span style={{ color: "#FF9900", fontWeight: 600, flexShrink: 0 }}>$</span>
+                <span style={{ color: "#fff", fontWeight: 500 }}>{line.t}</span>
+              </div>
+            ) : (
+              <div
+                key={`custom-${i}`}
+                onClick={line.isAction && line.targetId ? () => handleNavigate(line.targetId!) : undefined}
+                style={{
+                  color: line.c || "transparent",
+                  height: line.t === "" ? 6 : "auto",
+                  fontSize: 13,
+                  cursor: line.isAction ? "pointer" : "text",
+                  textDecoration: line.isAction ? "underline" : "none",
+                  textUnderlineOffset: 3,
+                  opacity: line.isAction ? 0.9 : 1,
+                  transition: "color 0.15s, opacity 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  if (line.isAction) e.currentTarget.style.color = "#FF9900";
+                }}
+                onMouseLeave={(e) => {
+                  if (line.isAction) e.currentTarget.style.color = line.c || "#38BDF8";
+                }}
+              >
+                {line.t}
+              </div>
+            )
+          ))}
+
+          {/* Active typable prompt */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+            <span style={{ color: "#FF9900", fontWeight: 600, flexShrink: 0 }}>$</span>
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputVal}
+              onChange={(e) => setInputVal(e.target.value)}
+              onKeyDown={handleKeyDown}
+              spellCheck={false}
+              autoComplete="off"
+              className="mono"
+              placeholder={bootCount >= INITIAL_BOOT_LINES.length && customLines.length === 0 ? "type 'ls' or 'help'..." : ""}
+              style={{
+                flex: 1,
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#fff",
+                fontSize: 13,
+                fontFamily: "inherit",
+                padding: 0,
+                caretColor: "#FF9900",
+              }}
+            />
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 }
 
@@ -205,23 +494,46 @@ export default function Hero() {
       {/* ── Main content ──────────────────────────────────────── */}
       <motion.div style={{ y: smooth, position: "relative", zIndex: 10 }}>
         <div style={W}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr",
-              gap: 64,
-              alignItems: "center",
-              minHeight: "78vh",
-              paddingTop: 40,
-              paddingBottom: 60,
-            }}
-          >
-            {/* On large screens: 2 columns */}
-            <style>{`@media(min-width:900px){#hero-grid{grid-template-columns:1fr 460px!important;gap:80px!important}}`}</style>
-            <div id="hero-grid" style={{ display: "contents" }}>
+          {/* Layout styles for top-right terminal placement */}
+          <style>{`
+            .hero-layout-wrap {
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              min-height: 74vh;
+              padding-top: 24px;
+              padding-bottom: 40px;
+              gap: 36px;
+            }
+            .hero-grid-top {
+              display: grid;
+              grid-template-columns: 1fr;
+              gap: 36px;
+              align-items: start;
+            }
+            .hero-terminal-col {
+              width: 100%;
+              max-width: 490px;
+              align-self: start;
+            }
+            @media (min-width: 900px) {
+              .hero-grid-top {
+                grid-template-columns: minmax(0, 1.15fr) minmax(380px, 490px);
+                gap: 52px;
+                align-items: start;
+              }
+              .hero-terminal-col {
+                margin-top: 14px;
+              }
+            }
+          `}</style>
+
+          <div className="hero-layout-wrap">
+            {/* Top row: Header content on the left, Terminal on the top right */}
+            <div className="hero-grid-top">
 
               {/* LEFT COLUMN */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
 
                 {/* Badge */}
                 <motion.div
@@ -252,15 +564,16 @@ export default function Hero() {
                 </motion.div>
 
                 {/* Headline */}
-                <div style={{ minHeight: "2.4em", display: "flex", alignItems: "center" }}>
+                <div style={{ minHeight: "1.25em", height: "1.25em", display: "flex", alignItems: "center" }}>
                   <h1
                     style={{
                       fontWeight: 800,
-                      lineHeight: 1.1,
+                      lineHeight: 1.15,
                       letterSpacing: "-0.03em",
-                      fontSize: "clamp(48px, 7vw, 90px)",
+                      fontSize: "clamp(34px, 4.4vw, 64px)",
                       color: "#fff",
                       margin: 0,
+                      whiteSpace: "nowrap",
                     }}
                   >
                     <Typewriter words={["Build With Us.", "Build With Kiro.", "Build With AWS."]} />
@@ -273,7 +586,7 @@ export default function Hero() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.8, duration: 0.7 }}
                   style={{
-                    fontSize: 18, lineHeight: 1.7, maxWidth: 480,
+                    fontSize: 18, lineHeight: 1.7, maxWidth: 500,
                     color: "rgba(255,255,255,0.55)",
                   }}
                 >
@@ -295,54 +608,55 @@ export default function Hero() {
                     See what we've built
                   </a>
                 </motion.div>
-
-                {/* Stat strip */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.15 }}
-                  style={{
-                    display: "flex", gap: 36, paddingTop: 28,
-                    borderTop: "1px solid rgba(255,255,255,0.07)",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  {[["200+", "Members"], ["15+", "Projects"], ["40+", "Certs"], ["8", "Events"]].map(([val, label], i) => (
-                    <motion.div
-                      key={label}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.15 + i * 0.08 }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 28, fontWeight: 800,
-                          background: "linear-gradient(135deg, #FF9900, #FFBE00)",
-                          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                          backgroundClip: "text",
-                          lineHeight: 1,
-                        }}
-                      >
-                        {val}
-                      </div>
-                      <div
-                        className="mono"
-                        style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginTop: 5 }}
-                      >
-                        {label}
-                      </div>
-                    </motion.div>
-                  ))}
-                </motion.div>
               </div>
 
-              {/* RIGHT COLUMN — Terminal (hidden on mobile, shown on 900px+) */}
-              <div style={{ display: "none" }} id="hero-terminal-col">
-                <style>{`@media(min-width:900px){#hero-terminal-col{display:block!important}}`}</style>
+              {/* RIGHT COLUMN — Terminal positioned at the top right next to header text */}
+              <div className="hero-terminal-col" id="hero-terminal-col">
                 <Terminal />
               </div>
 
             </div>
+
+            {/* Stat strip spanning cleanly across bottom */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.15 }}
+              style={{
+                display: "flex", gap: "clamp(24px, 5vw, 56px)", paddingTop: 28,
+                borderTop: "1px solid rgba(255,255,255,0.07)",
+                flexWrap: "wrap",
+                alignItems: "center",
+              }}
+            >
+              {[["200+", "Members"], ["15+", "Projects"], ["40+", "Certs"], ["8", "Events"]].map(([val, label], i) => (
+                <motion.div
+                  key={label}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.15 + i * 0.08 }}
+                  style={{ minWidth: 90 }}
+                >
+                  <div
+                    style={{
+                      fontSize: 28, fontWeight: 800,
+                      background: "linear-gradient(135deg, #FF9900, #FFBE00)",
+                      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {val}
+                  </div>
+                  <div
+                    className="mono"
+                    style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginTop: 5 }}
+                  >
+                    {label}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </div>
       </motion.div>
