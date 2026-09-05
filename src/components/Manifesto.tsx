@@ -20,7 +20,16 @@ export default function Manifesto() {
   const lineX = useTransform(scrollYProgress, [0, 1], [-30, 30]);
 
   return (
-    <section style={{ ...S, background: "transparent", overflow: "hidden" }}>
+    <section
+      id="manifesto"
+      style={{
+        ...S,
+        position: "relative",
+        zIndex: 20,
+        overflow: "hidden",
+        background: "transparent",
+      }}
+    >
       {/* Faint vertical line */}
       <motion.div
         style={{
@@ -41,7 +50,7 @@ export default function Manifesto() {
         "
       </div>
 
-      <div ref={ref} style={W}>
+      <div id="manifesto-content" ref={ref} style={{ ...W, willChange: "transform, opacity" }}>
         {/* Label */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}

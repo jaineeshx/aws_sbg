@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
+import Hero from "@/components/hero";
 import Manifesto from "@/components/Manifesto";
 
 import Events from "@/components/Events";

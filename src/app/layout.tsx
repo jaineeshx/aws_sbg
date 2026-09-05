@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import VantaBackground from "@/components/VantaBackground";
+import SmoothScroll from "@/components/SmoothScroll";
 
 export const metadata: Metadata = {
   title: "AWS Student Builder Group | RV University",
   description: "We're building what's missing — a builder-first community. AWS SBG at RV University hosts hands-on workshops, hackathons, and real cloud projects for students who ship.",
   keywords: "AWS, cloud computing, student community, RV University, builder, hackathon, workshops, Amazon Web Services",
+  icons: {
+    icon: "/logo-sbg.jpg",
+    apple: "/logo-sbg.jpg",
+  },
   openGraph: {
     title: "AWS Student Builder Group | RV University",
     description: "We're building what's missing — a builder-first community.",
@@ -20,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -29,7 +34,8 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>
+      <body suppressHydrationWarning>
+        <SmoothScroll />
         <VantaBackground />
         {children}
       </body>
