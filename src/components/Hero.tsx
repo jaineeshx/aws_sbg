@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 /* ── shared layout constants ───────────────────────────────────────────────── */
 export const W = { maxWidth: 1160, margin: "0 auto", padding: "0 clamp(24px, 5vw, 60px)" } as const;
@@ -628,27 +629,143 @@ function DataTrace({ headlineRef, terminalRef }: {
 
 /* ── hero ────────────────────────────────────────────────────────────────────── */
 export default function Hero() {
-  const { scrollY } = useScroll();
-  const yParallax = useTransform(scrollY, [0, 700], [0, -80]);
-  const smooth = useSpring(yParallax, { stiffness: 60, damping: 18 });
+  const heroSectionRef = useRef<HTMLElement>(null);
+  const heroLeftRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const terminalColRef = useRef<HTMLDivElement>(null);
+  const statStripRef = useRef<HTMLDivElement>(null);
+  const dataTraceRef = useRef<HTMLDivElement>(null);
+  const scrollCueRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const ctx = gsap.context(() => {
+      if (!heroSectionRef.current) return;
+
+      const isMobile = window.innerWidth < 768;
+      const textX = isMobile ? -110 : -180;
+      const termX = isMobile ? 110 : 180;
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: heroSectionRef.current,
+          start: "top top",
+          end: () => `+=${Math.min(Math.max(window.innerHeight, 650), 850)}`,
+          pin: true,
+          pinSpacing: false,
+          scrub: 1,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      // 1. Data trace & scroll cue fade out quickly at start of scroll
+      if (dataTraceRef.current) {
+        tl.to(dataTraceRef.current, { opacity: 0, duration: 0.18, ease: "power1.out" }, 0);
+      }
+      if (scrollCueRef.current) {
+        tl.to(scrollCueRef.current, { opacity: 0, duration: 0.18, ease: "power1.out" }, 0);
+      }
+
+      // 2. Hero text/content on left: slides left, rotates slightly, scales down, fades out
+      // Spec: x: 0 -> -180px, rotation: 0 -> -2deg, scale: 1 -> 0.92, opacity: 1 -> 0
+      if (heroLeftRef.current) {
+        tl.to(
+          heroLeftRef.current,
+          {
+            x: textX,
+            rotation: -2,
+            scale: 0.92,
+            opacity: 0,
+            ease: "power1.inOut",
+            duration: 1,
+          },
+          0
+        );
+      }
+
+      // 3. Terminal on right: slides right, rotates slightly, scales down, fades out
+      // Spec: x: 0 -> 180px, rotation: 0 -> 3deg, scale: 1 -> 0.88, opacity: 1 -> 0
+      if (terminalColRef.current) {
+        tl.to(
+          terminalColRef.current,
+          {
+            x: termX,
+            rotation: 3,
+            scale: 0.88,
+            opacity: 0,
+            ease: "power1.inOut",
+            duration: 1,
+            onComplete: () => {
+              if (terminalColRef.current) terminalColRef.current.style.pointerEvents = "none";
+            },
+            onReverseComplete: () => {
+              if (terminalColRef.current) terminalColRef.current.style.pointerEvents = "auto";
+            },
+          },
+          0
+        );
+      }
+
+      // 4. Stat strip fades out and slightly drifts down
+      if (statStripRef.current) {
+        tl.to(
+          statStripRef.current,
+          {
+            y: 35,
+            scale: 0.94,
+            opacity: 0,
+            ease: "power1.inOut",
+            duration: 0.75,
+          },
+          0
+        );
+      }
+
+      // 5. Next section text comes forward into focus while background flows continuously
+      const manifestoContent = document.getElementById("manifesto-content") || document.getElementById("manifesto");
+      if (manifestoContent) {
+        tl.fromTo(
+          manifestoContent,
+          {
+            scale: 0.90,
+            y: 90,
+            opacity: 0,
+            transformOrigin: "center 30%",
+          },
+          {
+            scale: 1,
+            y: 0,
+            opacity: 1,
+            ease: "power2.out",
+            duration: 1,
+          },
+          0.05
+        );
+      }
+    }, heroSectionRef);
+
+    return () => ctx.revert();
+  }, []);
 
   return (
     <section
       id="hero"
+      ref={heroSectionRef}
       style={{
         position: "relative",
         minHeight: "100vh",
+        height: "100vh",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
         overflow: "hidden",
         background: "transparent",
         paddingTop: 90,
+        zIndex: 10,
       }}
     >
-      {/* ── Aurora blobs ─────────────────────────────────────── */}
+      {/* ── Aurora blobs (continuous background flow) ─────────────────── */}
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
         <div
           className="aurora-1"
@@ -689,7 +806,7 @@ export default function Hero() {
       />
 
       {/* ── Main content ──────────────────────────────────────── */}
-      <motion.div style={{ y: smooth, position: "relative", zIndex: 10 }}>
+      <div style={{ position: "relative", zIndex: 10, width: "100%" }}>
         <div style={W}>
           {/* Layout styles for top-right terminal placement */}
           <style>{`
@@ -747,7 +864,16 @@ export default function Hero() {
             <div className="hero-grid-top">
 
               {/* LEFT COLUMN */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              <div
+                ref={heroLeftRef}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 24,
+                  willChange: "transform, opacity",
+                  transformOrigin: "center left",
+                }}
+              >
 
                 {/* Headline */}
                 <div style={{ display: "flex", alignItems: "center" }}>
@@ -800,93 +926,118 @@ export default function Hero() {
               </div>
 
               {/* RIGHT COLUMN — Terminal positioned at the top right next to header text */}
-              <div className="hero-terminal-col" id="hero-terminal-col" ref={terminalColRef}>
+              <div
+                className="hero-terminal-col"
+                id="hero-terminal-col"
+                ref={terminalColRef}
+                style={{
+                  willChange: "transform, opacity",
+                  transformOrigin: "center right",
+                }}
+              >
                 <Terminal />
               </div>
 
               {/* Data trace: headline → terminal */}
-              <div className="hero-data-trace" style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "visible" }}>
+              <div
+                ref={dataTraceRef}
+                className="hero-data-trace"
+                style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "visible" }}
+              >
                 <DataTrace headlineRef={headlineRef} terminalRef={terminalColRef} />
               </div>
 
             </div>
 
             {/* Stat strip spanning cleanly across bottom */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.15 }}
-              style={{
-                display: "flex", gap: "clamp(16px, 3.5vw, 40px)", paddingTop: 28,
-                borderTop: "1px solid rgba(255,255,255,0.07)",
-                flexWrap: "wrap",
-                alignItems: "center",
-              }}
+            <div
+              ref={statStripRef}
+              style={{ willChange: "transform, opacity" }}
             >
-              {[
-                { val: "200+", label: "Members" },
-                { val: "15+", label: "Projects" },
-                { val: "40+", label: "Certs" },
-                { val: "8", label: "Events" },
-              ].map(({ val, label }, i) => (
-                <motion.div
-                  key={label}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.15 + i * 0.08 }}
-                  style={{
-                    minWidth: 95,
-                    padding: "6px 12px",
-                    borderRadius: 12,
-                  }}
-                >
-                  <div
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.15 }}
+                style={{
+                  display: "flex", gap: "clamp(16px, 3.5vw, 40px)", paddingTop: 28,
+                  borderTop: "1px solid rgba(255,255,255,0.07)",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}
+              >
+                {[
+                  { val: "200+", label: "Members" },
+                  { val: "15+", label: "Projects" },
+                  { val: "40+", label: "Certs" },
+                  { val: "8", label: "Events" },
+                ].map(({ val, label }, i) => (
+                  <motion.div
+                    key={label}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.15 + i * 0.08 }}
                     style={{
-                      fontSize: 28, fontWeight: 800,
-                      background: "linear-gradient(135deg, #FF9900, #FFBE00)",
-                      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                      lineHeight: 1,
+                      minWidth: 95,
+                      padding: "6px 12px",
+                      borderRadius: 12,
                     }}
                   >
-                    {val}
-                  </div>
-                  <div
-                    className="mono"
-                    style={{
-                      fontSize: 10,
-                      letterSpacing: "0.2em",
-                      textTransform: "uppercase",
-                      color: "rgba(255,255,255,0.28)",
-                      marginTop: 5,
-                    }}
-                  >
-                    {label}
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
+                    <div
+                      style={{
+                        fontSize: 28, fontWeight: 800,
+                        background: "linear-gradient(135deg, #FF9900, #FFBE00)",
+                        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {val}
+                    </div>
+                    <div
+                      className="mono"
+                      style={{
+                        fontSize: 10,
+                        letterSpacing: "0.2em",
+                        textTransform: "uppercase",
+                        color: "rgba(255,255,255,0.28)",
+                        marginTop: 5,
+                      }}
+                    >
+                      {label}
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Scroll cue */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2.2 }}
+      <div
+        ref={scrollCueRef}
         style={{
           position: "absolute", bottom: 36, left: "50%", transform: "translateX(-50%)",
           display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+          pointerEvents: "none", zIndex: 12,
         }}
       >
-        <span className="mono" style={{ fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(255,255,255,0.2)" }}>
-          scroll
-        </span>
-        <motion.div animate={{ y: [0, 7, 0] }} transition={{ duration: 1.6, repeat: Infinity }}>
-          <ChevronDown size={15} style={{ color: "rgba(255,255,255,0.2)" }} />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2.2 }}
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+          }}
+        >
+          <span className="mono" style={{ fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(255,255,255,0.2)" }}>
+            scroll
+          </span>
+          <motion.div animate={{ y: [0, 7, 0] }} transition={{ duration: 1.6, repeat: Infinity }}>
+            <ChevronDown size={15} style={{ color: "rgba(255,255,255,0.2)" }} />
+          </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
     </section>
   );
 }
