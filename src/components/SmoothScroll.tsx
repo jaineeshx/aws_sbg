@@ -27,12 +27,12 @@ export default function SmoothScroll() {
     gsap.ticker.add(updateTicker);
     gsap.ticker.lagSmoothing(0);
 
-    (window as any).__lenis = lenis;
+    window.__lenis = lenis;
 
     return () => {
       gsap.ticker.remove(updateTicker);
       lenis.destroy();
-      delete (window as any).__lenis;
+      delete window.__lenis;
     };
   }, []);
 
