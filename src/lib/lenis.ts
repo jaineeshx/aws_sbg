@@ -16,7 +16,7 @@ export function lenisScrollTo(
 ) {
   if (typeof window === "undefined") return;
 
-  const lenis = (window as unknown as { __lenis?: Lenis }).__lenis;
+  const lenis = window.__lenis;
 
   let el: HTMLElement | null = null;
   if (typeof target === "string") {
