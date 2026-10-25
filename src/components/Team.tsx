@@ -171,12 +171,6 @@ const CREW: CrewMember[] = [
     fallbackPhoto: driveThumbnail("1MRyAxWaP-ae4j_NE6bJjaDlF_0Ir6lGY"),
   },
   {
-    name: "Ishani V Sheshgiri",
-    dept: "growth",
-    photo: "/images/team/members/ishani-v-sheshgiri.webp",
-    fallbackPhoto: driveThumbnail("13zZ8A1gxkJ-2uzZPDwD5lHafCm2aogb4"),
-  },
-  {
     name: "Amrithaa M",
     dept: "events",
     photo: "/images/team/members/amrithaa-m.webp",
@@ -217,12 +211,6 @@ const CREW: CrewMember[] = [
     dept: "growth",
     photo: "/images/team/members/vijayashree-r.webp",
     fallbackPhoto: driveThumbnail("1ENGetuLEfF_-LboK_yzO_4RuUYwVqN0z"),
-  },
-  {
-    name: "Shriya Narasipura",
-    dept: "events",
-    photo: "/images/team/members/shriya-narasipura.webp",
-    fallbackPhoto: driveThumbnail("14VRsJjjGPOsu-Xy2ytRWD_BKRIZLVIjl"),
   },
   {
     name: "Kadiyala Udaya Sree",
@@ -688,7 +676,6 @@ function CrewWall({
                       imageClass="pw-person-img"
                       placeholderClass="pw-person-fallback"
                     />
-                    <span className="pw-person-index">{pad2(CREW.findIndex((item) => item.name === member.name) + 1)}</span>
                     <span className="pw-person-corner" aria-hidden="true" />
                     <span className="pw-person-shine" aria-hidden="true" />
                     <div className="pw-person-caption">
@@ -1169,7 +1156,6 @@ const PW_CSS = `
 .pw-person-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(110% 80% at 30% 15%,rgba(255,153,0,.14),transparent 57%),linear-gradient(160deg,#161A26,#090B12)}
 .pw-person-fallback span{font-size:clamp(32px,4vw,60px);font-weight:800;letter-spacing:-.065em;color:transparent;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(255,255,255,.47) 68%,rgba(255,153,0,.9));-webkit-background-clip:text;background-clip:text}
 .pw-person-photo::after{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,rgba(4,5,9,.16),transparent 28%,rgba(4,5,9,.12) 48%,rgba(4,5,9,.92) 100%);pointer-events:none}
-.pw-person-index{position:absolute;top:10px;left:11px;z-index:2;font:600 9px 'JetBrains Mono',monospace;letter-spacing:.13em;color:rgba(255,255,255,.8);text-shadow:0 1px 6px rgba(0,0,0,.6)}
 .pw-person-corner{position:absolute;right:10px;top:10px;z-index:2;width:17px;height:17px;border-top:1px solid rgba(255,153,0,.72);border-right:1px solid rgba(255,153,0,.72);opacity:.8;transition:width .3s,height .3s,opacity .3s}
 .pw-person:hover .pw-person-corner{width:24px;height:24px;opacity:1}
 .pw-person-shine{position:absolute;inset:0;z-index:1;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.1) 48%,transparent 62%);transform:translateX(-125%);transition:transform .75s ease;pointer-events:none}
