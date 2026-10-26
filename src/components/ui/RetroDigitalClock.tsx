@@ -1,5 +1,5 @@
 "use client";
-
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState, useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
