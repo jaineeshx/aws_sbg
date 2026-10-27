@@ -127,12 +127,22 @@ const DEPTS: { id: DeptId; label: string; head: number }[] = [
 
 interface CrewMember {
   name: string;
-  dept: DeptId;
+  dept: DeptId | null;
   photo: string;
   fallbackPhoto: string;
 }
 
-/* Real roster supplied for the AWS SBG people section (17 members). */
+const HOME_LEADS: CrewMember[] = HEADS.map((head) => {
+  const department = DEPTS.find((item) => HEADS[item.head] === head);
+  return {
+    name: head.name,
+    dept: department?.id ?? null,
+    photo: head.photo,
+    fallbackPhoto: head.photo,
+  };
+});
+
+/* Real roster supplied for the AWS SBG people section (15 members). */
 const CREW: CrewMember[] = [
   {
     name: "Lipika B Prakash",
@@ -235,6 +245,8 @@ const VIEWS: { id: string; label: string; dept: DeptId | null }[] = [
   })),
 ];
 
+const DIRECTORY_MEMBERS = [...HOME_LEADS, ...CREW];
+
 const mono = (name: string) =>
   name
     .split(/\s+/)
@@ -249,8 +261,8 @@ const inSlug = (url: string) =>
 const clampN = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 const pad2 = (value: number) => String(value).padStart(2, "0");
-const deptLabel = (dept: DeptId) =>
-  DEPTS.find((item) => item.id === dept)?.label ?? "Team";
+const deptLabel = (dept: DeptId | null) =>
+  DEPTS.find((item) => item.id === dept)?.label ?? "Core Team";
 const finePointer = () =>
   typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches;
 
@@ -478,11 +490,19 @@ function CrewWall({
 
   const members = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
-    return CREW.filter((member) => {
+    const leadOrder = new Map(HOME_LEADS.map((member, index) => [member.name, index]));
+    return DIRECTORY_MEMBERS.filter((member) => {
       const matchesDept = !selectedDept || member.dept === selectedDept;
       const searchable = `${member.name} ${deptLabel(member.dept)}`.toLocaleLowerCase();
       return matchesDept && (!normalizedQuery || searchable.includes(normalizedQuery));
-    }).sort((a, b) => a.name.localeCompare(b.name));
+    }).sort((a, b) => {
+      const aLeadIndex = leadOrder.get(a.name);
+      const bLeadIndex = leadOrder.get(b.name);
+      if (aLeadIndex !== undefined && bLeadIndex !== undefined) return aLeadIndex - bLeadIndex;
+      if (aLeadIndex !== undefined) return -1;
+      if (bLeadIndex !== undefined) return 1;
+      return a.name.localeCompare(b.name);
+    });
   }, [query, selectedDept]);
 
   const goView = useCallback((delta: number) => {
@@ -593,7 +613,7 @@ function CrewWall({
                 exit={reducedMotion ? undefined : { y: -12, opacity: 0 }}
                 transition={{ duration: 0.26, ease: EASE }}
               >
-                {selectedDept ? <>{view.label}<sup>{pad2(CREW.filter((m) => m.dept === selectedDept).length)}</sup></> : <>Meet the <span>builders.</span></>}
+                {selectedDept ? <>{view.label}<sup>{pad2(DIRECTORY_MEMBERS.filter((m) => m.dept === selectedDept).length)}</sup></> : <>Meet the <span>builders.</span></>}
               </motion.h3>
             </AnimatePresence>
             <p className="pw-ov-sub">
@@ -613,8 +633,8 @@ function CrewWall({
           <div className="pw-pills" role="tablist" aria-label="Filter members by team">
             {VIEWS.map((item, index) => {
               const count = item.dept
-                ? CREW.filter((member) => member.dept === item.dept).length
-                : CREW.length;
+                ? DIRECTORY_MEMBERS.filter((member) => member.dept === item.dept).length
+                : DIRECTORY_MEMBERS.length;
               return (
                 <button
                   key={item.id}
@@ -730,6 +750,7 @@ export default function Team() {
   const wheelLock = useRef(Number.NEGATIVE_INFINITY);
   const [overlayView, setOverlayView] = useState<string | null>(null);
   const overlayOriginRef = useRef<HTMLElement | null>(null);
+  const overlayHistoryRef = useRef(false);
 
   const share = viewportWidth < 520 ? 0.8 : 0.72;
   const cardWidth = Math.round(clampN(viewportWidth * share, 268, 380));
@@ -845,12 +866,34 @@ export default function Team() {
 
   const openDirectory = useCallback((view: string, element: HTMLElement) => {
     overlayOriginRef.current = element;
+    window.history.pushState(
+      { ...(window.history.state ?? {}), awsSbgTeamDirectory: true },
+      "",
+      window.location.href,
+    );
+    overlayHistoryRef.current = true;
     setOverlayView(view);
   }, []);
   const closeDirectory = useCallback(() => {
+    if (overlayHistoryRef.current) {
+      window.history.back();
+      return;
+    }
     setOverlayView(null);
     overlayOriginRef.current?.focus({ preventScroll: true });
   }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (!overlayView) return;
+      overlayHistoryRef.current = false;
+      setOverlayView(null);
+      overlayOriginRef.current?.focus({ preventScroll: true });
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [overlayView]);
 
   const activeHead = HEADS[index];
 
